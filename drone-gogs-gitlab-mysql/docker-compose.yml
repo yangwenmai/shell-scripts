@@ -1,0 +1,81 @@
+version: '2'
+
+services:
+  gogs:
+    image: gogs/gogs
+    # container_name: drone_gogs
+    restart: always
+    volumes:
+      - ./gogs:/data
+    ports:
+      - "10022:22"
+      - "3000:3000"
+
+  gitlab:
+  	image: gitlab/gitlab-ce:11.1.0-ce.0
+  	restart: always
+  	volumes:
+  	  - ./data/conf:/etc/gitlab
+  	  - ./data/log:/var/log/gitlab
+  	  - ./data:/var/opt/gitlab
+  	ports:
+  	  - "443:443"
+  	  - "80:80"
+  	  - "22:22"
+  	environment:
+      - "GITLAB_HOST=192.168.0.56"
+
+  mysql-server:
+  	image: mysql:5.7.23
+  	restart: always
+  	volumes:
+  	  - ./mysql/data/:/var/lib/mysql
+      - ./mysql/logs:/logs
+  	ports:
+  	  - "3306:3306"
+  	environment:
+      - MYSQL_ROOT_PASSWORD=123456
+
+  drone-server:
+    image: drone/drone:0.8
+    ports:
+      - 8000:8000
+      - 9000:9000
+    volumes:
+      - ./drone:/var/lib/drone/
+    restart: always
+    depends_on:
+      - mysql-server
+    environment:
+      - DRONE_OPEN=true
+      - DRONE_DEBUG=true
+      - DRONE_HOST=http://192.168.0.56:9000
+      #- DRONE_GOGS=true
+      #- DRONE_GOGS_URL=http://192.168.0.56:3000
+      - DRONE_GITLAB=true
+      - DRONE_GITLAB_CLIENT=8b176db54eaab72a41759f71ca087bc65a87bf9db80a11363e73a5eff2fda0e4
+      - DRONE_GITLAB_SECRET=fb05e4ca7264a5a2bf06065b1a7893bda968fc771b2ca71514e008b0b5b86207
+      - DRONE_GITLAB_URL=http://192.168.0.56
+      - DRONE_GITLAB_SKIP_VERIFY=true
+      #  - DRONE_GITLAB_PRIVATE_MODE=true
+      - DRONE_GITLAB_GIT_USERNAME=root
+      - DRONE_GITLAB_GIT_PASSWORD=rckNtecW8BhqEkZx
+      - DRONE_SECRET=ZHJvbmVfZ29nc19naXRsYWIK
+      - DRONE_DATABASE_DRIVER=mysql
+      - DRONE_DATABASE_DATASOURCE=root:123456@tcp(mysql-server:3306)/drone?parseTime=true
+      - HTTP_PROXY=http://192.168.0.56:1087
+      - HTTPS_PROXY=http://192.168.0.56:1087
+
+  drone-agent:
+    image: drone/agent:0.8
+    restart: always
+    depends_on:
+      - drone-server
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - DRONE_DEBUG=true
+      - DRONE_SERVER=drone-server:9000
+      - DRONE_SECRET=ZHJvbmVfZ29nc19naXRsYWIK
+
+

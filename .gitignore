@@ -15,5 +15,8 @@ gogs/gogs/*
 gogs/ssh/*
 gogs/git/*
 minikube-istio/istio-1.0.0/*
+drone-gogs-gitlab-mysql/drone/*
+drone-gogs-gitlab-mysql/gogs/*
+drone-gogs-gitlab-mysql/mysql/*
 .DS_Store
 

@@ -9,10 +9,11 @@ services:
       - ./mysql/data/:/var/lib/mysql
       - ./mysql/logs:/logs
         #  - ./init.sql:/sql/init.sql
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+        #- ./init.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
       - "3306:3306"
     environment:
+      - MYSQL_DATABASE=drone
       - MYSQL_ROOT_PASSWORD=123456
 
   gogs:
@@ -68,7 +69,8 @@ services:
       #- DRONE_GITLAB_GIT_PASSWORD=rckNtecW8BhqEkZx
       - DRONE_SECRET=ZHJvbmVfZ29nc19naXRsYWIK
       - DRONE_DATABASE_DRIVER=mysql
-      - DRONE_DATABASE_DATASOURCE=drone:drone_123456@tcp(mysql-server:3306)/drone?parseTime=true
+        #- DRONE_DATABASE_DATASOURCE=drone:drone_123456@tcp(mysql-server:3306)/drone?parseTime=true
+      - DRONE_DATABASE_DATASOURCE=root:123456@tcp(mysql-server:3306)/drone?parseTime=true
       - HTTP_PROXY=http://192.168.0.56:1087
       - HTTPS_PROXY=http://192.168.0.56:1087
 

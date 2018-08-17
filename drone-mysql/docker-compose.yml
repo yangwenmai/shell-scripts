@@ -48,7 +48,7 @@ services:
     image: drone/drone:0.8
     ports:
       - 8000:8000
-      - 9001:9000
+      - 9000:9000
     volumes:
       - ./drone:/var/lib/drone/
     restart: always

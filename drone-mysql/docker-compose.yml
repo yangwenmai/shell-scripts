@@ -1,0 +1,84 @@
+version: '2'
+
+services:
+  mysql-server:
+    image: mysql:5.7.23
+    restart: always
+    #    command: --init-file /sql/init.sql
+    volumes:
+      - ./mysql/data/:/var/lib/mysql
+      - ./mysql/logs:/logs
+        #  - ./init.sql:/sql/init.sql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DATABASE_NAME}
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+
+        #gogs:
+        #   image: gogs/gogs
+        #   # container_name: drone_gogs
+        #   restart: always
+        #   depends_on:
+        #     - mysql-server
+        #   volumes:
+        #     - ./gogs:/data
+        #   ports:
+        #     - "10022:22"
+        #     - "3000:3000"
+
+        #  gitlab:
+        #    image: gitlab/gitlab-ce:11.1.0-ce.0
+        #    restart: always
+        #    volumes:
+        #      - ./data/conf:/etc/gitlab
+        #      - ./data/log:/var/log/gitlab
+        #      - ./data:/var/opt/gitlab
+        #    ports:
+        #      - "443:443"
+        #      - "80:80"
+        #      - "22:22"
+        #    environment:
+        #      - "GITLAB_HOST=192.168.0.56"
+
+  drone-server:
+    image: drone/drone:0.8
+    ports:
+      - 8000:8000
+      - 9001:9000
+    volumes:
+      - ./drone:/var/lib/drone/
+    restart: always
+    depends_on:
+      - mysql-server
+    environment:
+      - DRONE_OPEN=true
+      - DRONE_HOST=${DRONE_HOST}
+      - DRONE_GITLAB=true
+      - DRONE_GITLAB_CLIENT=${DRONE_GITLAB_CLIENT}
+      - DRONE_GITLAB_SECRET=${DRONE_GITLAB_SECRET}
+      - DRONE_GITLAB_URL=${DRONE_GITLAB_URL}
+      - DRONE_GITLAB_SKIP_VERIFY=true
+      - DRONE_GITLAB_PRIVATE_MODE=true
+      - DRONE_DATABASE_DRIVER=${DRONE_DATABASE_DRIVER}
+      - DRONE_DATABASE_DATASOURCE=${DRONE_DATABASE_DATASOURCE}
+      - HTTP_PROXY=${HTTP_PROXY}
+      - HTTPS_PROXY=${HTTPS_PROXY}
+      - DRONE_SECRET=${DRONE_SECRET}
+
+  drone-agent:
+    image: drone/agent:0.8
+    restart: always
+    depends_on:
+      - drone-server
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - DRONE_DEBUG=true
+      - DRONE_SERVER=drone-server:9000
+      - DRONE_SECRET=${DRONE_SECRET}
+
+

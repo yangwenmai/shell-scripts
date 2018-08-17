@@ -1,16 +1,16 @@
-web:
-  image: 'gitlab/gitlab-ce:10.3.4-ce.0'
+gitlab:
+  image: 'gitlab/gitlab-ce:11.1.0-ce.0'
+  container_name: 'gitlab'
   restart: always
-  hostname: 'maigitlab.com'
   environment:
     GITLAB_OMNIBUS_CONFIG: |
-      external_url 'http://maigitlab.com'
+     external_url:'http://${LOCAL_IP}'
   ports:
     - '80:80'
     - '443:443'
     - '22:22'
   volumes:
-    - './config:/etc/gitlab'
-    - './logs:/var/log/gitlab'
+    - './data/config:/etc/gitlab'
+    - './data/logs:/var/log/gitlab'
     - './data:/var/opt/gitlab'
 

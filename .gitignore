@@ -18,5 +18,6 @@ minikube-istio/istio-1.0.0/*
 drone-mysql/drone/*
 drone-mysql/gogs/*
 drone-mysql/mysql/*
+mongodb/data/*
 .DS_Store
 

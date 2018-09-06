@@ -93,4 +93,3 @@ services:
       - DRONE_DEBUG=true
       - DRONE_SERVER=drone-server:9000
       - DRONE_SECRET=${DRONE_SECRET}
-

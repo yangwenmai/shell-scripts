@@ -1,0 +1,47 @@
+version: '3'
+
+services:
+  nginx:
+    container_name: 'phabricator-nginx'
+    hostname: 'phabricator-nginx'
+    image: 'openresty/openresty:alpine-fat'
+    depends_on:
+      - phabricator
+    volumes:
+      - '/data/phabricator/nginx/nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf'
+      - '/data/phabricator/nginx/vhosts.conf:/etc/nginx/conf.d/default.conf'
+      # - '/data/phabricator/nginx/phabricator.htpasswd:/etc/nginx/auth_basic/phabricator.htpasswd'
+    ports:
+      - '8088:80'
+    restart: on-failure
+  fix-mariadb-volume-ownership:
+    image: 'bitnami/mariadb:10.1.36'
+    user: root
+    command: chown -R 1001:1001 /bitnami
+    volumes:
+      - './mariadb_data:/bitnami'
+  mariadb:
+    image: 'bitnami/mariadb:10.1.36'
+    environment:
+      - MARIADB_ROOT_PASSWORD=****
+    volumes:
+      - ./mariadb_data:/bitnami
+    depends_on:
+      - fix-mariadb-volume-ownership
+    restart: on-failure
+  phabricator:
+    image: 'bitnami/phabricator:2018.43.0'
+    depends_on:
+      - mariadb
+    ports:
+      - '80:80'
+    environment:
+      - PHABRICATOR_HOST=your domain name or ip:80
+      - PHABRICATOR_USERNAME=root
+      - PHABRICATOR_PASSWORD=****
+      - MARIADB_USER=root
+      - MARIADB_PASSWORD=****
+      - MARIADB_PORT_NUMBER=3306
+    volumes:
+      - ./phabricator_data:/bitnami
+    restart: on-failure

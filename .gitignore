@@ -20,4 +20,6 @@ drone-mysql/gogs/*
 drone-mysql/mysql/*
 mongodb/data/*
 .DS_Store
+phabricator/mariadb_data/*
+phabricator/phabricator_data/*
 

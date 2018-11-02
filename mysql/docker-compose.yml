@@ -1,9 +1,9 @@
 mysql:
-    image: mysql:5.7.20
-    container_name: mysql5.7.20
+    image: mysql:5.7.23
+    container_name: mysql5.7.23
     restart: always
     ports:
-      - "127.0.0.1:3307:3306"
+      - "3307:3306"
     environment:
       - MYSQL_ROOT_PASSWORD=123456
     volumes:

@@ -22,4 +22,6 @@ mongodb/data/*
 .DS_Store
 phabricator/mariadb_data/*
 phabricator/phabricator_data/*
+efb/config.py
+efb/tgdata.db
 

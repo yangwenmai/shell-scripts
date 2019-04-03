@@ -1,6 +1,5 @@
 # docker/docker-compose/kubernetes scripts
 
-- [.git](./.git)
 - [anser](./anser)
 - [docker-registry](./docker-registry)
 - [docker_test](./docker_test)

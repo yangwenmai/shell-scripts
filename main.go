@@ -16,7 +16,7 @@ func main() {
 
 	r := ""
 	for _, f := range files {
-		if f.IsDir() {
+		if f.IsDir() && f.Name() != ".git" {
 			r += fmt.Sprintf("- [%s](./%s)\n", f.Name(), f.Name())
 		}
 	}

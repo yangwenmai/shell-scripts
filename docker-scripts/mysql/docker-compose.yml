@@ -1,0 +1,11 @@
+mysql:
+    image: mysql:5.7.23
+    container_name: mysql5.7.23
+    restart: always
+    ports:
+      - "3307:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=123456
+    volumes:
+        - /Users/maiyang/develop/docker_workspace/mysql/data/:/var/lib/mysql
+        - /Users/maiyang/develop/docker_workspace/mysql/logs:/logs

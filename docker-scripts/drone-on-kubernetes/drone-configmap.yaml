@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: drone-config
+  namespace: drone
+data:
+
+  ######################
+  # Drone Server Config #
+  ######################
+
+  server.host: "http://192.168.99.100:9000"
+  server.debug: "true"
+  server.open: "true"
+  server.admin: maiyang
+  server.http_proxy: "http://192.168.0.56:1087"
+  server.https_proxy: "http://192.168.0.56:1087"
+
+  # database
+  server.database.driver: sqlite3
+  server.database.datasource: drone.sqlite
+
+  server.remote.gogs: "true"
+  server.remote.gogs.url: "http://192.168.99.100:30080"
+  server.remote.gogs.skip.verify: "true"
+
+  ######################
+  # Drone Agent Config #
+  ######################
+  
+  agent.debug: "true"
+  agent.debug.pretty: "true"
+  agent.max.procs: "1"
+  agent.healthcheck: "true"
+  agent.keepalive.time: "1m"
+  agent.keepalive.timeout: "2m"

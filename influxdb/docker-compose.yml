@@ -1,9 +1,0 @@
-mysql:
-    image: influxdb
-    container_name: influxdb
-    restart: always
-    ports:
-      - "8083:8083"
-      - "8086:8086"
-    volumes:
-        - /Users/maiyang/develop/docker_workspace/influxdb/data/:/var/lib/influxdb

@@ -1,4 +1,8 @@
-IN="bla@some.com,john@home.com"
-declare -a a="(${IN/,/ })";
-for i in ${a[*]}; do echo $i; done
+IN="bla@some.com;john@home.com;ok@f.com"
+IFS=';'
+read -a IN_arr <<< "${IN}"
+for entry in "${IN_arr[@]}"
+do
+    echo $entry
+done
 

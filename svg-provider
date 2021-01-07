@@ -1,0 +1,163 @@
+#!/bin/bash
+
+#################################################################################
+#- Svg convert provider for ImageMagick delegate(internal)
+#- Usage:
+#-	> svg-provider <commands>
+#-	  commands: --help, --version, --install, --uninstall, --info
+#-	> svg-provider <file.svg> options ...
+#-	  support: some converter in this provider
+#-	  options:
+#-	    --force='%s'                      # force use a converter
+#-	    --export-png='%s'                 # string - output file
+#-	    --export-dpi='%s'                 # format - xRes,yRes
+#-	    --export-background='%s'          # format - #ff007f, or rgb(r%,g%,b%)
+#-	    --export-background-opacity='%s'  # number - 0.0 .. 1, or 2 .. 255
+#- Version: 1.0.2
+## Author: aimingoo
+## Site: https://github.com/aimingoo/svg-provider
+#################################################################################
+
+## default setting
+INFILE="$1"
+FORCE=false
+EXPORT_PNG="${1%.svg}.png"
+EXPORT_DPI="96,96"            # 96,96
+EXPORT_BACKGROUND="white"     # rbg(100%,100%,100%)
+EXPORT_BACKGROUND_OPACITY=""  # 1
+
+## commands or --help
+for param; do
+	if [[ "$param" == "--help" ]]; then
+		head -n 20 "$0" | grep -Ee '^#-' | sed "s/^#-//; s/support: .*/support: $(grep -Eo 'which-s [^;\\[]{1,}' $0 | cut -f2 -d' ' | xargs)/"
+		exit
+	fi
+	if [[ "$param" == "--version" ]]; then
+		head -n 20 $0 | grep -Eie '^#-[ 	]*version[: 	]+' | grep -Eoe '[0-9]+\..*'
+		exit
+	fi
+	if [[ "$param" == "--install" ]] || [[ "$param" == "--uninstall" ]] || [[ "$param" == "--info" ]]; then
+		delegates_xml=$(convert -list delegate | grep '^Path:' | sed 's/^Path: *//')
+		if [[ -f "$delegates_xml" ]]; then
+			if [[ "$param" == "--info" ]]; then
+				grep -Fe 'svg:decode' $delegates_xml | grep --color -Ee 'svg:decode|command'
+				exit
+			fi
+
+			provider="$0"
+			more_arguments=""
+			if [[ "$param" == "--install" ]]; then
+				for param_extra; do
+					if [[ "$param_extra" =~ ^--*[fF][oO][rR][cC][eE]= ]]; then
+						more_arguments="${param_extra} "
+						break
+					fi
+				done
+			else
+				provider="inkscape"
+			fi
+
+			## sed -i, compatible macosx and gnu
+			##	- Replace with condition: https://stackoverflow.com/a/11958590/8673626
+			if sed --version 2>&1 | grep -q 'illegal option'; then
+				sed -i '' -e '/svg:decode/ s| *--force=[^ ]*||; /svg:decode/ s|\(command *= *"&quot;\)[^&]*\(&quot; *&quot;%s&quot;\) *'"|\1${provider}\2 ${more_arguments}|" "${delegates_xml}"
+			else
+				sed -i'' -e '/svg:decode/ s| *--force=[^ ]*||; /svg:decode/ s|\(command *= *"&quot;\)[^&]*\(&quot; *&quot;%s&quot;\) *'"|\1${provider}\2 ${more_arguments}|" "${delegates_xml}"
+			fi
+
+			## recheck
+			if grep -Eqe "svg:decode.*${provider}" "${delegates_xml}"; then
+				echo 'ImageMagick internal delegate (un)installed.'
+			else
+				echo '(Un)install invalid.'
+			fi
+		else
+			echo "Can't found ImageMagick."
+		fi
+		exit
+	fi
+done
+
+## proess arguments
+for param; do
+	[[ "$param" =~ ^- ]] && declare $(echo ${param%%=*} | tr '[a-z]' '[A-Z]' | sed 's/^--*//; s/-/_/g')=$(expr "$param" : '.*=\(.*\)' \| true)
+done
+DPI_X="${EXPORT_DPI%%,*}"
+DPI_Y="${EXPORT_DPI##*,}"
+
+##################################################################
+#             rewrite which to force anything                   #
+##################################################################
+if [[ "$FORCE" == "false" ]]; then 
+	which-s() { which -s $@; };
+else
+	which-s() { [[ "$1" == "$FORCE" ]]; }
+fi
+
+##################################################################
+#                      (rsvglib and cairo based)                 #
+##################################################################
+
+## https://live.gnome.org/LibRsvg
+##	- brew install librsvg
+if which-s rsvg-convert; then
+	rsvg-convert -u --keep-image-data -f png -o "$EXPORT_PNG" -d "$DPI_X" -p "$DPI_Y" -b "${EXPORT_BACKGROUND}" "$INFILE"; exit $?
+fi
+
+##################################################################
+#                      (cairo based)                             #
+##################################################################
+
+## http://cairosvg.org/
+##	- pip install cairosvg
+if which-s cairosvg; then
+	cairosvg -o "$EXPORT_PNG" -d "$DPI_X" "$INFILE"; exit $?
+fi
+
+## https://cairographics.org/
+## - brew install svg2png
+if which-s svg2png; then
+	svg2png "$INFILE" "$EXPORT_PNG"; exit $?
+fi
+
+## https://github.com/miyako/console-svg-to-pdf
+##	# clone from github, and relink these symbols: compile depcomp missing install-sh, ex:
+##	# > echo 'compile depcomp missing install-sh' | xargs -n1 -I{} ln -sf /usr/local/Cellar/automake/1.15/share/automake-1.15/{} {}
+##	> ./configure; make; make install
+if which-s wasvg; then
+	wasvg -p -x "$DPI_X" -y "$DPI_Y" -i "$INFILE" -o "$EXPORT_PNG"; exit $?
+fi
+
+##################################################################
+#                      (xquartz based)                           #
+##################################################################
+
+## https://inkscape.org/
+##	- brew cask install xquartz inkscape
+if which-s inkscape; then
+	if [[ "$(inkscape --without-gui)" == "Nothing to do!" ]]; then
+		inkscape -z -e "$EXPORT_PNG" -d "$EXPORT_DPI" -b "$EXPORT_BACKGROUND" -y "${EXPORT_BACKGROUND_OPACITY:-0}" "$INFILE"; exit $?
+	fi
+fi
+
+
+##################################################################
+#                   (nodejs & PhantomJS based)                   #
+##################################################################
+ 
+
+## https://github.com/shakiba/svgexport
+##	- npm install svgexport -g
+if which-s svgexport; then
+	if [ -n "$EXPORT_BACKGROUND_OPACITY" -a `expr "${EXPORT_BACKGROUND}" : '^[rR][gG][bB]'` ]; then
+		declare -a RGBA="${EXPORT_BACKGROUND:3}"
+		RGBA+=(", $EXPORT_BACKGROUND_OPACITY")
+		svgexport "$INFILE" "$EXPORT_PNG" png "svg{background:rgba(${RGBA[@]});}"; exit $?
+	else
+		svgexport "$INFILE" "$EXPORT_PNG" png "svg{background:$EXPORT_BACKGROUND;}"; exit $?
+	fi
+fi
+
+
+exit 1
+
